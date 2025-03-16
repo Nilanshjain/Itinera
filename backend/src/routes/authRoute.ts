@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { register, login, logout, checkAuth } from "../controllers/authController";
+import { protectRoute } from "../middleware/protectRoute";
 
 const router = Router();
 
@@ -13,6 +14,6 @@ router.post("/login", login);
 router.post("/logout", logout);
 
 // Check authentication status
-router.get("/check-auth", checkAuth);
+router.get("/check-auth", protectRoute, checkAuth);
 
 export default router;
