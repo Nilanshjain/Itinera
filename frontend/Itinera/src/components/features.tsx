@@ -1,4 +1,7 @@
+"use client"
+
 import { Globe2, Sparkles, Clock, Wallet, Map, Smartphone } from "lucide-react"
+import { motion } from "framer-motion"
 
 export function Features() {
   const features = [
@@ -38,22 +41,40 @@ export function Features() {
   return (
     <div className="container py-16 md:py-24">
       <div className="text-center mb-12">
-        <h2 className="text-3xl md:text-4xl font-bold mb-4">Why Choose TravelAI?</h2>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          viewport={{ once: true }}
+          className="text-3xl md:text-4xl font-bold mb-4"
+        >
+          Why Choose TravelAI?
+        </motion.h2>
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          viewport={{ once: true }}
+          className="text-lg text-muted-foreground max-w-2xl mx-auto"
+        >
           Our AI-powered platform makes travel planning effortless, personalized, and fun.
-        </p>
+        </motion.p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {features.map((feature, index) => (
-          <div
+          <motion.div
             key={index}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: index * 0.1 }}
+            viewport={{ once: true }}
             className="bg-white dark:bg-gray-900 p-6 rounded-lg border hover:shadow-md transition-shadow"
           >
             <div className="mb-4">{feature.icon}</div>
             <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
             <p className="text-muted-foreground">{feature.description}</p>
-          </div>
+          </motion.div>
         ))}
       </div>
     </div>
