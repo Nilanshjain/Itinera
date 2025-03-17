@@ -1,13 +1,14 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useNavigate} from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CalendarIcon, MapPin, Clock, Plus, Trash2 } from "lucide-react"
 import { motion } from "framer-motion"
+import { useAuthStore } from "@/store/useAuthstore"
 
 interface Itinerary {
   id: string
@@ -19,9 +20,8 @@ interface Itinerary {
 }
 
 export default function Dashboard() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [user, setUser] = useState<{ name: string; email: string } | null>(null)
   const navigate = useNavigate();
+  const { authUser, checkAuth } = useAuthStore();
 
   // Sample itineraries data
   const [savedItineraries, setSavedItineraries] = useState<Itinerary[]>([
@@ -52,23 +52,20 @@ export default function Dashboard() {
   ])
 
   useEffect(() => {
-    // Check if user is authenticated
-    const auth = localStorage.getItem("isAuthenticated")
-    const userData = localStorage.getItem("user")
-
-    if (auth === "true" && userData) {
-      setIsAuthenticated(true)
-      setUser(JSON.parse(userData))
-    } else {
-      navigate("/sign-in")
-    }
-  }, [navigate])
+    const verifyAuth = async () => {
+      await checkAuth();
+      if (!authUser) {
+        navigate("/sign-in");
+      }
+    };
+    verifyAuth();
+  }, [authUser, checkAuth, navigate]);
 
   const deleteItinerary = (id: string) => {
     setSavedItineraries(savedItineraries.filter((itinerary) => itinerary.id !== id))
   }
 
-  if (!isAuthenticated) {
+  if (!authUser) {
     return null // Will redirect to sign-in
   }
 
@@ -81,7 +78,7 @@ export default function Dashboard() {
           <div className="container">
             <div className="flex flex-col md:flex-row justify-between items-center">
               <div>
-                <h1 className="text-3xl font-bold mb-2">Welcome back, {user?.name}!</h1>
+                <h1 className="text-3xl font-bold mb-2">Welcome back, {authUser.name}!</h1>
                 <p className="text-muted-foreground">Manage your travel plans and create new adventures</p>
               </div>
               <Button className="mt-4 md:mt-0" onClick={() => navigate("/")}>

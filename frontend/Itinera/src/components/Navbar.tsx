@@ -1,45 +1,37 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
+
+
+
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Menu, X } from "lucide-react"
+import { Menu, X, LayoutDashboard, LogOut } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
-
+import { useAuthStore } from "@/store/useAuthstore"
 
 export function Navbar() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [user, setUser] = useState<{ name: string; email: string } | null>(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
+  const { authUser, logout } = useAuthStore()
 
-  useEffect(() => {
-    const auth = localStorage.getItem("isAuthenticated")
-    const userData = localStorage.getItem("user")
-
-    if (auth === "true" && userData) {
-      setIsAuthenticated(true)
-      setUser(JSON.parse(userData))
+  const handleSignOut = async () => {
+    try {
+      await logout();
+      navigate("/");
+    } catch (error) {
+      console.error("Logout error:", error);
     }
-  }, [location])
-
-  const handleSignOut = () => {
-    localStorage.removeItem("isAuthenticated")
-    localStorage.removeItem("user")
-    setIsAuthenticated(false)
-    setUser(null)
-    setTimeout(() => {
-      navigate("/")
-    },100);
   }
+
+  
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
@@ -60,7 +52,7 @@ export function Navbar() {
               <path d="M2 17l10 5 10-5" />
               <path d="M2 12l10 5 10-5" />
             </svg>
-            <span className="text-xl font-bold">TravelAI</span>
+            <span className="text-xl font-bold">ITINERA</span>
           </Link>
         </div>
         <nav className="hidden md:flex items-center gap-6">
@@ -83,35 +75,46 @@ export function Navbar() {
             Blog
           </Link>
         </nav>
+
         <div className="flex items-center gap-4">
-          {isAuthenticated ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
-                    {user?.name?.charAt(0).toUpperCase() || "U"}
+          {authUser ? (
+            <>
+              <Button variant="ghost" size="icon" asChild className="hidden md:flex">
+                <Link to="/dashboard" title="Dashboard">
+                  <LayoutDashboard className="h-5 w-5" />
+                </Link>
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger>
+                  <Button variant="ghost" size="icon" className="rounded-full">
+                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
+                      {authUser.name?.charAt(0).toUpperCase() || "U"}
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="px-2 py-1.5">
+                    <p className="text-sm font-medium">{authUser.name}</p>
+                    <p className="text-xs text-muted-foreground">{authUser.email}</p>
                   </div>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <div className="px-2 py-1.5">
-                  <p className="text-sm font-medium">{user?.name}</p>
-                  <p className="text-xs text-muted-foreground">{user?.email}</p>
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/dashboard">Dashboard</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/dashboard/itineraries">My Itineraries</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/dashboard/settings">Account Settings</Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>Sign Out</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <DropdownMenuSeparator />
+                  <Link to="/dashboard/itineraries" className="block px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground">
+                    My Itineraries
+                  </Link>
+                  <Link to="/dashboard/settings" className="block px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground">
+                    Account Settings
+                  </Link>
+                  <DropdownMenuSeparator />
+                  <button
+                    onClick={handleSignOut}
+                    className="flex w-full items-center gap-2 px-2 py-1.5 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sign Out
+                  </button>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
           ) : (
             <>
               <Button variant="ghost" size="sm" asChild>
@@ -159,14 +162,25 @@ export function Navbar() {
               >
                 Blog
               </Link>
-              {isAuthenticated && (
-                <Link
-                  to="/dashboard"
-                  className="block py-2 text-sm font-medium hover:text-primary"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Dashboard
-                </Link>
+              {authUser && (
+                <>
+                  <Link
+                    to="/dashboard"
+                    className="block py-2 text-sm font-medium hover:text-primary"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  <button
+                    onClick={() => {
+                      handleSignOut();
+                      setIsMenuOpen(false);
+                    }}
+                    className="block w-full text-left py-2 text-sm font-medium text-red-600 hover:text-red-700"
+                  >
+                    Sign Out
+                  </button>
+                </>
               )}
             </div>
           </motion.div>
@@ -175,3 +189,4 @@ export function Navbar() {
     </header>
   )
 }
+

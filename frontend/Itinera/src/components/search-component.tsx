@@ -12,20 +12,64 @@ import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Slider } from "@/components/ui/slider"
 import { motion } from "framer-motion"
+import { useNavigate } from "react-router-dom"
+import { useAuthStore } from "@/store/useAuthstore"
+import { axiosInstance } from "@/lib/axios"
+import toast from "react-hot-toast"
 
 export function SearchComponent() {
   const [searchMode, setSearchMode] = useState("text")
-  const [startDate, setStartDate] = useState<Date>()
-  const [endDate, setEndDate] = useState<Date>()
+  const [prompt, setPrompt] = useState("")
+  const [travelStyle, setTravelStyle] = useState("")
+  const [destination, setDestination] = useState("")
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined)
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined)
   const [budget, setBudget] = useState([1000])
   const [isGenerating, setIsGenerating] = useState(false)
+  const navigate = useNavigate()
+  const { authUser } = useAuthStore()
 
-  const handleGenerateItinerary = () => {
+  const handleGenerateItinerary = async () => {
+    if (!authUser) {
+      toast.error("Please sign in to generate itineraries")
+      navigate("/sign-in")
+      return
+    }
+
     setIsGenerating(true)
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      console.log("Sending request with data:", {
+        prompt: searchMode === "text" ? prompt : undefined,
+        travelStyle: searchMode === "options" ? travelStyle : undefined,
+        destination: searchMode === "options" ? destination : undefined,
+        startDate: startDate ? format(startDate, "yyyy-MM-dd") : undefined,
+        endDate: endDate ? format(endDate, "yyyy-MM-dd") : undefined,
+        budget: budget[0],
+      })
+
+      const response = await axiosInstance.post("/itinerary/generate", {
+        prompt: searchMode === "text" ? prompt : undefined,
+        travelStyle: searchMode === "options" ? travelStyle : undefined,
+        destination: searchMode === "options" ? destination : undefined,
+        startDate: startDate ? format(startDate, "yyyy-MM-dd") : undefined,
+        endDate: endDate ? format(endDate, "yyyy-MM-dd") : undefined,
+        budget: budget[0],
+      })
+
+      console.log("Received response:", response.data)
+
+      // Store the generated itinerary in localStorage or state management
+      localStorage.setItem("currentItinerary", JSON.stringify(response.data))
+      
+      // Navigate to the itinerary view page
+      navigate("/itinerary/view")
+    } catch (error: any) {
+      console.error("Error generating itinerary:", error)
+      console.error("Error response:", error.response?.data)
+      toast.error(error.response?.data?.error || "Failed to generate itinerary")
+    } finally {
       setIsGenerating(false)
-    }, 2000)
+    }
   }
 
   return (
@@ -56,6 +100,8 @@ export function SearchComponent() {
               <Input
                 placeholder="E.g., I want a 7-day cultural trip to Japan in April with a medium budget..."
                 className="h-12"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
               />
             </div>
             <Button className="w-full" onClick={handleGenerateItinerary} disabled={isGenerating}>
@@ -96,7 +142,7 @@ export function SearchComponent() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Travel Style</label>
-                <Select>
+                <Select value={travelStyle} onValueChange={setTravelStyle}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select style" />
                   </SelectTrigger>
@@ -113,7 +159,7 @@ export function SearchComponent() {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Destination</label>
-                <Select>
+                <Select value={destination} onValueChange={setDestination}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select destination" />
                   </SelectTrigger>
@@ -143,8 +189,18 @@ export function SearchComponent() {
                       {startDate ? format(startDate, "PPP") : "Select date"}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus />
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      disabled={(date) => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        return date < today;
+                      }}
+                      initialFocus
+                    />
                   </PopoverContent>
                 </Popover>
               </div>
@@ -161,8 +217,18 @@ export function SearchComponent() {
                       {endDate ? format(endDate, "PPP") : "Select date"}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus />
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      disabled={(date) => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        return date < (startDate || today);
+                      }}
+                      initialFocus
+                    />
                   </PopoverContent>
                 </Popover>
               </div>

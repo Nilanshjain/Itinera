@@ -28,6 +28,7 @@ export const protectRoute = async (req: Request, res: Response, next: NextFuncti
     }
 
     console.log("🟢 Token Found:", token);
+    
 
     // Decode & verify JWT
     const decoded = jwt.verify(token, JWT_SECRET) as DecodedToken;
@@ -51,5 +52,6 @@ export const protectRoute = async (req: Request, res: Response, next: NextFuncti
   } catch (error: any) {
     console.error("🔴 ProtectRoute error:", error.message);
     res.status(401).json({ error: "Unauthorized - Invalid token" });
+    
   }
 };

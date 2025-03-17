@@ -1,120 +1,72 @@
-"use client"
-
-import type React from "react"
-
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import {Link} from "react-router-dom"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
-import { motion } from "framer-motion"
-import { toast } from "sonner"
-import { Toaster } from "@/components/ui/sonner"
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
+import { motion } from "framer-motion";
+import { Toaster } from "@/components/ui/sonner";
+import LoadingScreen from "@/components/loading-screen";
+import { useAuthStore } from "@/store/useAuthstore";
 
 export default function SignIn() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { login, isLoggingIn, authUser, checkAuth } = useAuthStore();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const verifyAuth = async () => {
+      await checkAuth();
+      if (authUser) {
+        navigate("/dashboard");
+      }
+    };
+    verifyAuth();
+  }, [authUser, checkAuth, navigate]);
+
   const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-
-    // Simulate authentication
-    setTimeout(() => {
-      // In a real app, you would validate credentials against a backend
-      localStorage.setItem("isAuthenticated", "true")
-      localStorage.setItem("user", JSON.stringify({ email, name: email.split("@")[0] }))
-
-      toast.success("Signed in!",{
-        description: "You have successfully signed in.",
-    })
-
-      navigate("/")
-      setIsLoading(false)
-    }, 1500)
-  }
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      await login({ email, password });
+      // Navigation will be handled by the useEffect when authUser changes
+    } catch (error) {
+      console.error("Sign in failed:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
+      {(isLoading || isLoggingIn) && <LoadingScreen />}
       <Navbar />
-      <div
-        className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-cover bg-center"
-        style={{
-          backgroundImage: "url('/placeholder.svg?height=1080&width=1920')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      >
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-
+      <div className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="z-10 w-full max-w-md space-y-8 bg-white dark:bg-gray-900 p-8 rounded-xl shadow-xl"
         >
-          <div className="text-center">
-            <h2 className="mt-6 text-3xl font-bold tracking-tight">Welcome back</h2>
-            <p className="mt-2 text-sm text-muted-foreground">Sign in to your account to continue your journey</p>
-          </div>
-
+          <h2 className="text-center text-3xl font-bold">Sign In</h2>
           <form className="mt-8 space-y-6" onSubmit={handleSignIn}>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="email">Email address</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
 
-              <div>
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
-                  <Link to="#" className="text-sm font-medium text-primary hover:underline">
-                    Forgot password?
-                  </Link>
-                </div>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-            </div>
+            <Label htmlFor="password">Password</Label>
+            <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign in"}
+            <Button type="submit" className="w-full" disabled={isLoggingIn}>
+              {isLoggingIn ? "Signing in..." : "Sign In"}
             </Button>
-
-            <div className="text-center text-sm">
-              <span className="text-muted-foreground">Don't have an account? </span>
-              <Link to ="/get-started" className="font-medium text-primary hover:underline">
-                Sign up
-              </Link>
-            </div>
           </form>
         </motion.div>
       </div>
       <Footer />
-      <Toaster/>
+      <Toaster />
     </div>
-  )
+  );
 }
-

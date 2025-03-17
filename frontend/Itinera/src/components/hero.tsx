@@ -2,10 +2,41 @@
 
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
+import { useState, useEffect } from "react"
+
+const images = [
+  "/bg-1.avif",
+  "/bg-2.jpeg",
+  "/bg-3.jpg",
+] // Add more images if needed
 
 export function Hero() {
+  const [currentImage, setCurrentImage] = useState(0)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImage((prev) => (prev + 1) % images.length)
+    }, 5000) // Changes every 5 seconds
+    return () => clearInterval(interval)
+  }, [])
+
   return (
     <div className="relative overflow-hidden bg-gradient-to-b from-violet-100 to-white dark:from-violet-950 dark:to-background py-20 md:py-32">
+      {/* Background Carousel */}
+      <div className="absolute inset-0 w-full h-full overflow-hidden">
+        {images.map((image, index) => (
+          <motion.img
+            key={index}
+            src={image}
+            alt="Background"
+            className="absolute inset-0 w-full h-full object-cover"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: currentImage === index ? 0.3 : 0 }} // Reduced opacity for readability
+            transition={{ duration: 1 }}
+          />
+        ))}
+      </div>
+
       <div className="container relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -13,10 +44,10 @@ export function Hero() {
           transition={{ duration: 0.5 }}
           className="max-w-3xl mx-auto text-center"
         >
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 text-black dark:text-white">
             AI-Powered Travel Itineraries <span className="text-primary">Just For You</span>
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-black dark:text-white mb-8 max-w-2xl mx-auto">
             Create personalized travel plans in seconds. Our AI understands your preferences and builds the perfect
             itinerary for your next adventure.
           </p>
@@ -29,30 +60,6 @@ export function Hero() {
             </Button>
           </div>
         </motion.div>
-      </div>
-
-      {/* Background images */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-10">
-        <img
-          src="/placeholder.svg?height=600&width=800"
-          alt="Santorini, Greece"
-          className="absolute top-[10%] left-[5%] w-64 h-48 object-cover rounded-lg"
-        />
-        <img
-          src="/placeholder.svg?height=600&width=800"
-          alt="Kyoto, Japan"
-          className="absolute top-[20%] right-[10%] w-72 h-48 object-cover rounded-lg"
-        />
-        <img
-          src="/placeholder.svg?height=600&width=800"
-          alt="New York, USA"
-          className="absolute bottom-[15%] left-[15%] w-64 h-40 object-cover rounded-lg"
-        />
-        <img
-          src="/placeholder.svg?height=600&width=800"
-          alt="Bali, Indonesia"
-          className="absolute bottom-[10%] right-[5%] w-56 h-40 object-cover rounded-lg"
-        />
       </div>
 
       {/* Decorative elements */}
@@ -71,4 +78,3 @@ export function Hero() {
     </div>
   )
 }
-
